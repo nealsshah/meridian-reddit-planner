@@ -1,200 +1,180 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createCampaign, type DisclosurePolicy, type PromotionStrength } from "@/lib/store";
-
-const inputClass =
-  "w-full border border-border bg-card px-4 py-3 text-sm focus:outline-none focus:ring-0 focus:border-foreground transition-colors";
-const selectClass =
-  "w-full border border-border bg-card px-4 py-3 text-sm focus:outline-none focus:ring-0 focus:border-foreground transition-colors appearance-none cursor-pointer";
-const labelClass = "block text-xs font-medium tracking-[0.15em] uppercase text-muted mb-2";
+import { useState, useRef, useEffect } from "react";
+import { createCampaign } from "@/lib/store";
 
 export default function NewCampaignPage() {
   const router = useRouter();
+  const [brandName, setBrandName] = useState("");
+  const [category, setCategory] = useState("");
+  const [goalPrompts, setGoalPrompts] = useState("");
+  const [objective, setObjective] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const objectiveRef = useRef<HTMLTextAreaElement>(null);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = new FormData(e.currentTarget);
+  useEffect(() => {
+    objectiveRef.current?.focus();
+  }, []);
+
+  function autoResize() {
+    const el = objectiveRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 240) + "px";
+  }
+
+  const canSubmit = brandName.trim() && category.trim() && goalPrompts.trim() && objective.trim();
+
+  function handleSubmit() {
+    if (!canSubmit || submitted) return;
+    setSubmitted(true);
     const campaign = createCampaign({
-      brandName: form.get("brandName") as string,
-      category: form.get("category") as string,
-      goalPrompts: form.get("goalPrompts") as string,
-      objective: (form.get("objective") as string) || "",
-      targetSubs: (form.get("targetSubs") as string) || "",
-      brandVoice: (form.get("brandVoice") as string) || "",
-      doNotSay: (form.get("doNotSay") as string) || "",
-      disclosurePolicy: (form.get("disclosurePolicy") as DisclosurePolicy) || "optional",
-      promotionStrength: (form.get("promotionStrength") as PromotionStrength) || "medium",
-      brandDomain: (form.get("brandDomain") as string) || "",
-      competitors: (form.get("competitors") as string) || "",
+      brandName: brandName.trim(),
+      category: category.trim(),
+      goalPrompts: goalPrompts.trim(),
+      objective: objective.trim(),
+      targetSubs: "",
+      brandVoice: "helpful, practical, no marketing tone",
+      doNotSay: "buy now, limited time, best on the market, #1 guaranteed",
+      disclosurePolicy: "optional",
+      promotionStrength: "medium",
+      brandDomain: "",
+      competitors: "",
     });
     router.push(`/campaigns/${campaign.id}`);
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  }
+
   return (
-    <div className="max-w-2xl animate-fade-up">
-      {/* Header */}
-      <div className="mb-10 pb-6 border-b-2 border-foreground">
-        <p className="text-xs font-medium tracking-[0.25em] uppercase text-muted mb-3">
+    <div className="max-w-3xl">
+      {/* Headline */}
+      <div className="animate-fade-up mb-16">
+        <p className="text-xs font-medium tracking-[0.25em] uppercase text-muted mb-4">
           New Campaign
         </p>
-        <h1 className="font-display text-5xl">Create Campaign</h1>
+        <h1 className="font-display text-6xl md:text-8xl leading-[0.9] tracking-tight">
+          What are we<br />
+          <span className="text-accent italic">building?</span>
+        </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-7">
-        <div>
-          <label className={labelClass}>
-            Brand Name <span className="text-accent">*</span>
-          </label>
-          <input name="brandName" required placeholder="e.g. Nike" className={inputClass} />
+      {/* Brand + Category — inline sentence style */}
+      <div
+        className="mb-14 animate-fade-up"
+        style={{ animationDelay: "80ms" }}
+      >
+        <p className="text-xs font-medium tracking-[0.15em] uppercase text-muted mb-5">
+          The brand
+        </p>
+        <div className="flex items-baseline gap-3 flex-wrap text-2xl md:text-3xl font-display leading-tight">
+          <span className="text-foreground/30">Run a campaign for</span>
+          <span className="relative">
+            <input
+              value={brandName}
+              onChange={(e) => setBrandName(e.target.value)}
+              placeholder="brand"
+              className="bg-transparent border-b-2 border-foreground/20 focus:border-accent text-foreground font-display text-2xl md:text-3xl focus:outline-none transition-colors w-[180px] md:w-[220px] placeholder:text-foreground/15 pb-1"
+            />
+          </span>
+          <span className="text-foreground/30">in</span>
+          <span className="relative">
+            <input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="category"
+              className="bg-transparent border-b-2 border-foreground/20 focus:border-accent text-foreground font-display text-2xl md:text-3xl focus:outline-none transition-colors w-[200px] md:w-[260px] placeholder:text-foreground/15 pb-1"
+            />
+          </span>
         </div>
+      </div>
 
-        <div>
-          <label className={labelClass}>
-            Category <span className="text-accent">*</span>
-          </label>
-          <input name="category" required placeholder="e.g. Running Shoes" className={inputClass} />
-        </div>
+      {/* Goal Prompts */}
+      <div
+        className="mb-14 animate-fade-up"
+        style={{ animationDelay: "160ms" }}
+      >
+        <p className="text-xs font-medium tracking-[0.15em] uppercase text-muted mb-4">
+          Targeting these queries
+        </p>
+        <textarea
+          value={goalPrompts}
+          onChange={(e) => setGoalPrompts(e.target.value)}
+          rows={3}
+          placeholder={"best running shoes for beginners\nbest marathon training shoes\naffordable running shoes 2026"}
+          className="w-full bg-transparent border-b-2 border-foreground/10 focus:border-foreground/30 px-0 py-3 text-base leading-relaxed focus:outline-none resize-none transition-colors placeholder:text-foreground/15"
+        />
+      </div>
 
-        <div>
-          <label className={labelClass}>
-            Objective
-          </label>
+      {/* Objective — the hero input */}
+      <div
+        className="animate-fade-up"
+        style={{ animationDelay: "240ms" }}
+      >
+        <p className="text-xs font-medium tracking-[0.15em] uppercase text-muted mb-4">
+          Objective
+        </p>
+        <div className="relative border-l-4 border-accent bg-card">
           <textarea
-            name="objective"
-            rows={3}
-            placeholder={"Describe what you want to achieve in plain language, e.g.:\nI want to increase visibility of my brand when users search for best running shoes for beginners. Drive more organic traffic and get cited by AI assistants."}
-            className={inputClass + " resize-y"}
-          />
-          <p className="text-xs text-muted mt-1.5">
-            Describe your marketing goal and we&apos;ll generate a multi-channel workflow to achieve it
-          </p>
-        </div>
-
-        <div>
-          <label className={labelClass}>
-            Goal Prompts <span className="text-accent">*</span>
-          </label>
-          <textarea
-            name="goalPrompts"
-            required
-            rows={4}
-            placeholder={"One per line, e.g.:\nbest running shoes\nbest marathon shoes\nrunning shoes for beginners"}
-            className={inputClass + " resize-y"}
-          />
-          <p className="text-xs text-muted mt-1.5">
-            Search queries where you want your brand to show up in AI and Reddit answers
-          </p>
-        </div>
-
-        <div>
-          <label className={labelClass}>
-            Target Subreddits <span className="text-muted normal-case tracking-normal text-xs">(optional)</span>
-          </label>
-          <textarea
-            name="targetSubs"
-            rows={3}
-            placeholder={"One per line, e.g.:\nr/RunningShoeGeeks\nr/running"}
-            className={inputClass + " resize-y"}
-          />
-          <p className="text-xs text-muted mt-1.5">Leave blank and we&apos;ll suggest relevant subreddits automatically</p>
-        </div>
-
-        <div>
-          <label className={labelClass}>
-            Brand Domain <span className="text-muted normal-case tracking-normal text-xs">(optional)</span>
-          </label>
-          <input
-            name="brandDomain"
-            placeholder="e.g. nike.com"
-            className={inputClass}
-          />
-          <p className="text-xs text-muted mt-1.5">
-            Your website domain, so we can track which AI answers already cite your content
-          </p>
-        </div>
-
-        <div>
-          <label className={labelClass}>
-            Competitors <span className="text-muted normal-case tracking-normal text-xs">(optional)</span>
-          </label>
-          <textarea
-            name="competitors"
-            rows={3}
-            placeholder={"One per line, e.g.:\nadidas.com\nnewbalance.com"}
-            className={inputClass + " resize-y"}
-          />
-          <p className="text-xs text-muted mt-1.5">
-            Competitor websites to compare against in citation analysis
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className={labelClass}>Disclosure Policy</label>
-            <select name="disclosurePolicy" defaultValue="optional" className={selectClass}>
-              <option value="always">Always disclose</option>
-              <option value="optional">Optional (situational)</option>
-              <option value="never">Never disclose</option>
-            </select>
-            <p className="text-xs text-muted mt-1.5">
-              Whether generated comments should disclose the brand affiliation
-            </p>
-          </div>
-
-          <div>
-            <label className={labelClass}>Promotion Strength</label>
-            <select name="promotionStrength" defaultValue="medium" className={selectClass}>
-              <option value="soft">Soft — subtle, at most 1 mention</option>
-              <option value="medium">Medium — 1-2 mentions with rationale</option>
-              <option value="strong">Strong — brand-forward (auto-discloses)</option>
-            </select>
-            <p className="text-xs text-muted mt-1.5">
-              How prominently the brand features in generated comments
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <label className={labelClass}>
-            Brand Voice <span className="text-muted normal-case tracking-normal text-xs">(optional)</span>
-          </label>
-          <textarea
-            name="brandVoice"
+            ref={objectiveRef}
+            value={objective}
+            onChange={(e) => {
+              setObjective(e.target.value);
+              autoResize();
+            }}
+            onKeyDown={handleKeyDown}
             rows={2}
-            defaultValue="helpful, practical, no marketing tone"
-            className={inputClass + " resize-y"}
+            placeholder="Describe what you want to achieve..."
+            className="w-full bg-transparent pl-6 pr-16 py-5 text-lg leading-relaxed focus:outline-none resize-none placeholder:text-foreground/20"
+            style={{ minHeight: "80px" }}
           />
-        </div>
-
-        <div>
-          <label className={labelClass}>
-            Do-Not-Say List <span className="text-muted normal-case tracking-normal text-xs">(optional)</span>
-          </label>
-          <textarea
-            name="doNotSay"
-            rows={2}
-            defaultValue={"buy now, limited time, best on the market, #1 guaranteed"}
-            className={inputClass + " resize-y"}
-          />
-        </div>
-
-        <div className="flex gap-3 pt-3 border-t border-border">
           <button
-            type="submit"
-            className="bg-accent text-white px-7 py-3 text-sm font-medium tracking-wide uppercase hover:bg-accent-hover transition-colors"
+            onClick={handleSubmit}
+            disabled={!canSubmit || submitted}
+            className={`absolute right-4 bottom-4 w-11 h-11 flex items-center justify-center transition-all duration-200 ${
+              canSubmit && !submitted
+                ? "bg-accent text-white hover:bg-accent-hover scale-100"
+                : "bg-foreground/5 text-foreground/15 scale-90 cursor-not-allowed"
+            }`}
+            title="Create campaign"
           >
-            Create Campaign
-          </button>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-7 py-3 text-sm font-medium tracking-wide uppercase border border-border hover:border-foreground hover:bg-foreground hover:text-background transition-all duration-150"
-          >
-            Cancel
+            {submitted ? (
+              <span className="flex gap-1">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="w-1 h-1 bg-current rounded-full animate-dot"
+                    style={{ animationDelay: `${i * 160}ms` }}
+                  />
+                ))}
+              </span>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M3 9H15M15 9L10 4M15 9L10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+              </svg>
+            )}
           </button>
         </div>
-      </form>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-[10px] text-muted">
+            <kbd className="px-1 py-0.5 bg-foreground/[0.04] text-foreground/40 text-[9px] font-mono tracking-tight">Enter</kbd>
+            <span className="mx-1.5 text-foreground/20">/</span>
+            <kbd className="px-1 py-0.5 bg-foreground/[0.04] text-foreground/40 text-[9px] font-mono tracking-tight">Shift+Enter</kbd>
+            <span className="ml-1.5 text-foreground/30">new line</span>
+          </p>
+          {canSubmit && !submitted && (
+            <p className="text-[10px] text-accent font-medium tracking-wider uppercase animate-fade-up">
+              Ready
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
