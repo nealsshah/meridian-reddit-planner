@@ -1,26 +1,117 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f4f0;
+  --foreground: #0c0c0c;
+  --accent: #ff4500;
+  --accent-hover: #e03c00;
+  --muted: #6b6660;
+  --border: #d8d5cf;
+  --card: #ffffff;
+  --card-hover: #fafaf8;
+  --success: #0f7c5a;
+  --warning: #b45309;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --font-display: var(--font-dm-display);
+  --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* ── Keyframes ── */
+
+@keyframes meridian-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes meridian-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes meridian-scale-pop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes meridian-dot-bounce {
+  0%, 80%, 100% { transform: scale(0.55); opacity: 0.3; }
+  40%           { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes meridian-float {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-6px); }
+}
+
+@keyframes meridian-shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* ── Animation utility classes ── */
+
+.animate-fade-up {
+  animation: meridian-fade-up 0.5s var(--ease-out-quint) both;
+}
+
+.animate-slide-in {
+  animation: meridian-slide-in 0.25s var(--ease-out-quart) both;
+}
+
+.animate-scale-pop {
+  animation: meridian-scale-pop 0.3s var(--ease-out-quart);
+}
+
+.animate-dot {
+  animation: meridian-dot-bounce 1.4s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: meridian-float 3s ease-in-out infinite;
+}
+
+/* Shimmer sweep on active progress bar */
+.progress-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--accent) 25%,
+    var(--accent-hover) 50%,
+    var(--accent) 75%
+  );
+  background-size: 200% 100%;
+  animation: meridian-shimmer 1.8s linear infinite;
+}
+
+/* ── Reduced motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
