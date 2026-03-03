@@ -44,15 +44,5 @@ ${urlList}
 - Do NOT bash or disparage competitors. Be factual and neutral when comparing.
 - Attribute claims to their sources where appropriate.
 - Do NOT make unsubstantiated health, financial, or legal claims.
-
-## Output format
-Return ONLY valid JSON matching this schema:
-{
-  "title": "Article title",
-  "slug": "url-friendly-slug",
-  "content": "Full article in markdown format",
-  "wordCount": 1234,
-  "sourcesUsed": ["https://source1.com", "https://source2.com"],
-  "safetyNotes": ["Do not copy text verbatim"]
-}`;
+When you answer, return ONLY the full article content in markdown. Do not include any explanation, notes, or JSON – just the article itself.`; 
 }

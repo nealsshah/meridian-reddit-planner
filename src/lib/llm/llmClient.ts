@@ -214,32 +214,40 @@ export async function generateArticle(inputs: {
   const prompt = buildArticlePrompt(inputs);
   const raw = await callOpenAIWithWebSearch(prompt);
 
-  let parsed: unknown;
-  try {
-    parsed = extractJson(raw);
-  } catch {
-    throw new Error("LLM returned invalid JSON for article generation");
+  const content = raw.trim();
+  if (!content) {
+    throw new Error("Article generation returned empty content");
   }
 
-  // Fill in fields the LLM sometimes omits
-  if (parsed && typeof parsed === "object") {
-    const p = parsed as Record<string, unknown>;
-    if (typeof p.content === "string" && typeof p.wordCount !== "number") {
-      p.wordCount = p.content.trim().split(/\s+/).length;
-    }
-    if (!Array.isArray(p.sourcesUsed)) p.sourcesUsed = [];
-    if (!Array.isArray(p.safetyNotes)) p.safetyNotes = [];
-  }
+  const titleMatch = content.match(/^#\s+(.+)$/m);
+  const title =
+    titleMatch?.[1].trim() ||
+    inputs.brief.briefTitle ||
+    `${inputs.brandName} – ${inputs.brief.targetKeyword}`;
 
-  const validated = GeneratedArticleSchema.safeParse(parsed);
+  const slugBase = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+  const slug = slugBase || "article";
+
+  const wordCount = content.split(/\s+/).filter(Boolean).length;
+
+  const result = {
+    title,
+    slug,
+    content,
+    wordCount,
+    sourcesUsed: Array.from(new Set(inputs.citationUrls || [])),
+    safetyNotes: ["Do not copy text verbatim"],
+  };
+
+  const validated = GeneratedArticleSchema.safeParse(result);
   if (!validated.success) {
     throw new Error(`Article validation failed: ${JSON.stringify(validated.error.issues)}`);
   }
 
-  const article = validated.data;
-  if (!article.safetyNotes.some((n) => n.toLowerCase().includes("verbatim"))) {
-    article.safetyNotes.push("Do not copy text verbatim");
-  }
-
-  return article;
+  return validated.data;
 }
