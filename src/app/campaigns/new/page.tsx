@@ -10,25 +10,23 @@ export default function NewCampaignPage() {
   const [category, setCategory] = useState("");
   const [goalPrompts, setGoalPrompts] = useState("");
   const [objective, setObjective] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const objectiveRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    objectiveRef.current?.focus();
+    textareaRef.current?.focus();
   }, []);
 
   function autoResize() {
-    const el = objectiveRef.current;
+    const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 240) + "px";
+    el.style.height = Math.min(el.scrollHeight, 200) + "px";
   }
 
   const canSubmit = brandName.trim() && category.trim() && goalPrompts.trim() && objective.trim();
 
   function handleSubmit() {
-    if (!canSubmit || submitted) return;
-    setSubmitted(true);
+    if (!canSubmit) return;
     const campaign = createCampaign({
       brandName: brandName.trim(),
       category: category.trim(),
@@ -52,129 +50,116 @@ export default function NewCampaignPage() {
     }
   }
 
+  const inputClass =
+    "w-full rounded-lg border border-border bg-card px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors duration-150 placeholder:text-muted/50";
+  const labelClass =
+    "text-xs font-medium tracking-[0.15em] uppercase text-muted";
+
   return (
-    <div className="max-w-3xl">
-      {/* Headline */}
-      <div className="animate-fade-up mb-16">
-        <p className="text-xs font-medium tracking-[0.25em] uppercase text-muted mb-4">
-          New Campaign
+    <div className="max-w-2xl mx-auto">
+      {/* Header */}
+      <div className="text-center mb-10 animate-fade-up">
+        <div className="text-5xl mb-5 text-accent select-none">◊</div>
+        <h1 className="font-display text-5xl md:text-6xl mb-3">New Campaign</h1>
+        <p className="text-sm text-muted max-w-sm mx-auto">
+          We&apos;ll generate a multi-channel workflow and produce all the content automatically.
         </p>
-        <h1 className="font-display text-6xl md:text-8xl leading-[0.9] tracking-tight">
-          What are we<br />
-          <span className="text-accent italic">building?</span>
-        </h1>
       </div>
 
-      {/* Brand + Category — inline sentence style */}
+      {/* Context fields */}
       <div
-        className="mb-14 animate-fade-up"
-        style={{ animationDelay: "80ms" }}
+        className="rounded-xl border border-border bg-card p-5 mb-5 animate-fade-up"
+        style={{ animationDelay: "60ms" }}
       >
-        <p className="text-xs font-medium tracking-[0.15em] uppercase text-muted mb-5">
-          The brand
-        </p>
-        <div className="flex items-baseline gap-3 flex-wrap text-2xl md:text-3xl font-display leading-tight">
-          <span className="text-foreground/30">Run a campaign for</span>
-          <span className="relative">
+        {/* Brand + Category */}
+        <div className="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <label className={labelClass}>
+              Brand Name <span className="text-accent">*</span>
+            </label>
             <input
               value={brandName}
               onChange={(e) => setBrandName(e.target.value)}
-              placeholder="brand"
-              className="bg-transparent border-b-2 border-foreground/20 focus:border-accent text-foreground font-display text-2xl md:text-3xl focus:outline-none transition-colors w-[180px] md:w-[220px] placeholder:text-foreground/15 pb-1"
+              placeholder="e.g. Nike"
+              aria-label="Brand name"
+              className={`${inputClass} mt-2`}
             />
-          </span>
-          <span className="text-foreground/30">in</span>
-          <span className="relative">
+          </div>
+          <div>
+            <label className={labelClass}>
+              Category <span className="text-accent">*</span>
+            </label>
             <input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              placeholder="category"
-              className="bg-transparent border-b-2 border-foreground/20 focus:border-accent text-foreground font-display text-2xl md:text-3xl focus:outline-none transition-colors w-[200px] md:w-[260px] placeholder:text-foreground/15 pb-1"
+              placeholder="e.g. Running Shoes"
+              aria-label="Category"
+              className={`${inputClass} mt-2`}
             />
-          </span>
+          </div>
+        </div>
+
+        {/* Goal Prompts */}
+        <div>
+          <label className={labelClass}>
+            Goal Prompts <span className="text-accent">*</span>
+          </label>
+          <textarea
+            value={goalPrompts}
+            onChange={(e) => setGoalPrompts(e.target.value)}
+            rows={3}
+            aria-label="Goal prompts"
+            placeholder={"best running shoes for beginners\nbest marathon training shoes\naffordable running shoes 2026"}
+            className={`${inputClass} mt-2 resize-none`}
+          />
+          <p className="text-[10px] text-muted mt-1.5">
+            Search queries where you want your brand appearing in AI and search results
+          </p>
         </div>
       </div>
 
-      {/* Goal Prompts */}
+      {/* Objective — primary input */}
       <div
-        className="mb-14 animate-fade-up"
-        style={{ animationDelay: "160ms" }}
+        className="rounded-xl border border-border bg-card animate-fade-up focus-within:border-foreground transition-colors duration-150"
+        style={{ animationDelay: "120ms" }}
       >
-        <p className="text-xs font-medium tracking-[0.15em] uppercase text-muted mb-4">
-          Targeting these queries
-        </p>
-        <textarea
-          value={goalPrompts}
-          onChange={(e) => setGoalPrompts(e.target.value)}
-          rows={3}
-          placeholder={"best running shoes for beginners\nbest marathon training shoes\naffordable running shoes 2026"}
-          className="w-full bg-transparent border-b-2 border-foreground/10 focus:border-foreground/30 px-0 py-3 text-base leading-relaxed focus:outline-none resize-none transition-colors placeholder:text-foreground/15"
-        />
-      </div>
-
-      {/* Objective — the hero input */}
-      <div
-        className="animate-fade-up"
-        style={{ animationDelay: "240ms" }}
-      >
-        <p className="text-xs font-medium tracking-[0.15em] uppercase text-muted mb-4">
-          Objective
-        </p>
-        <div className="relative border-l-4 border-accent bg-card">
+        <div className="px-5 pt-4 pb-1">
+          <label className={labelClass}>
+            Objective <span className="text-accent">*</span>
+          </label>
+        </div>
+        <div className="relative">
           <textarea
-            ref={objectiveRef}
+            ref={textareaRef}
             value={objective}
             onChange={(e) => {
               setObjective(e.target.value);
               autoResize();
             }}
             onKeyDown={handleKeyDown}
-            rows={2}
-            placeholder="Describe what you want to achieve..."
-            className="w-full bg-transparent pl-6 pr-16 py-5 text-lg leading-relaxed focus:outline-none resize-none placeholder:text-foreground/20"
-            style={{ minHeight: "80px" }}
+            rows={1}
+            aria-label="Campaign objective"
+            placeholder="What do you want to achieve? e.g. Get my brand cited when users ask about running shoes, drive organic traffic, build Reddit presence..."
+            className="w-full bg-transparent px-5 pr-14 pb-4 pt-2 text-sm leading-relaxed focus:outline-none resize-none placeholder:text-muted/50 min-h-[52px]"
           />
           <button
             onClick={handleSubmit}
-            disabled={!canSubmit || submitted}
-            className={`absolute right-4 bottom-4 w-11 h-11 flex items-center justify-center transition-all duration-200 ${
-              canSubmit && !submitted
-                ? "bg-accent text-white hover:bg-accent-hover scale-100"
-                : "bg-foreground/5 text-foreground/15 scale-90 cursor-not-allowed"
-            }`}
-            title="Create campaign"
+            disabled={!canSubmit}
+            aria-label="Create campaign"
+            className="absolute right-3 bottom-3 w-9 h-9 rounded-lg flex items-center justify-center bg-accent text-white hover:bg-accent-hover active:scale-95 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none transition-all duration-150"
           >
-            {submitted ? (
-              <span className="flex gap-1">
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className="w-1 h-1 bg-current rounded-full animate-dot"
-                    style={{ animationDelay: `${i * 160}ms` }}
-                  />
-                ))}
-              </span>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M3 9H15M15 9L10 4M15 9L10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
-              </svg>
-            )}
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M2 8L14 8M14 8L9 3M14 8L9 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         </div>
-        <div className="flex items-center justify-between mt-2">
-          <p className="text-[10px] text-muted">
-            <kbd className="px-1 py-0.5 bg-foreground/[0.04] text-foreground/40 text-[9px] font-mono tracking-tight">Enter</kbd>
-            <span className="mx-1.5 text-foreground/20">/</span>
-            <kbd className="px-1 py-0.5 bg-foreground/[0.04] text-foreground/40 text-[9px] font-mono tracking-tight">Shift+Enter</kbd>
-            <span className="ml-1.5 text-foreground/30">new line</span>
-          </p>
-          {canSubmit && !submitted && (
-            <p className="text-[10px] text-accent font-medium tracking-wider uppercase animate-fade-up">
-              Ready
-            </p>
-          )}
-        </div>
       </div>
+      <p
+        className="text-[10px] text-muted mt-2 ml-1 animate-fade-up"
+        style={{ animationDelay: "180ms" }}
+      >
+        Press <kbd className="px-1 py-0.5 rounded bg-foreground/5 text-foreground text-[10px] font-mono">Enter</kbd> to create &middot; <kbd className="px-1 py-0.5 rounded bg-foreground/5 text-foreground text-[10px] font-mono">Shift+Enter</kbd> for new line
+      </p>
     </div>
   );
 }
