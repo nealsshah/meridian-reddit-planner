@@ -77,8 +77,8 @@ export function buildThreadSelectorPrompt(inputs: {
 }): string {
   const threadList = inputs.threads
     .map(
-      (t, i) =>
-        `[${i + 1}] id="${t.id}" sub=r/${t.subreddit} score=${t.score} comments=${t.numComments} age=${Math.floor(Date.now() / 1000 - t.createdUtc / 1)} title="${t.title}" body="${t.selftextSnippet.slice(0, 150)}"`
+      (t) =>
+        `- id="${t.id}" sub=r/${t.subreddit} score=${t.score} comments=${t.numComments} age=${Math.floor(Date.now() / 1000 - t.createdUtc / 1)} title="${t.title}" body="${t.selftextSnippet.slice(0, 150)}"`
     )
     .join("\n");
 
@@ -98,10 +98,10 @@ Pick the ${inputs.count} best threads for this brand to comment on. Prioritize:
 3. The brand can add genuine value — not just drop a name
 4. Avoid threads where the brand would feel forced or off-topic
 
-Return ONLY valid JSON, no markdown fences:
+Return ONLY valid JSON, no markdown fences. IMPORTANT: "id" must be the exact id string from the thread list above (e.g. "${inputs.threads[0]?.id || "abc123"}"), NOT an index number.
 {
   "selected": [
-    { "id": "thread_id", "reason": "one sentence on why this is a good fit" }
+    { "id": "exact_thread_id_string", "reason": "one sentence on why this is a good fit" }
   ]
 }`;
 }

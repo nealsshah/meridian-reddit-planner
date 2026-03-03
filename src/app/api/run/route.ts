@@ -37,8 +37,12 @@ async function fetchThreads(subreddit: string, query: string, limit = 10): Promi
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": "MeridianRedditPlanner/1.0 (read-only search tool)" },
+      cache: "no-store",
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.warn(`Reddit fetch failed: ${res.status} for ${sub || "all"} q="${query}"`);
+      return [];
+    }
     const json = await res.json();
     return (json?.data?.children ?? []).map((child: { data: Record<string, unknown> }) => {
       const d = child.data;
@@ -110,6 +114,7 @@ export async function POST(req: Request) {
     }
 
     const allThreads = Array.from(threadMap.values());
+    console.log(`Fetched ${allThreads.length} unique threads from ${fetchJobs.length} queries`);
 
     if (allThreads.length === 0) {
       return NextResponse.json({ error: "No threads found across all queries" }, { status: 404 });
@@ -138,8 +143,22 @@ export async function POST(req: Request) {
       .map((s) => ({
         thread: threadMap.get(s.id),
         reason: s.reason,
+        requestedId: s.id,
       }))
-      .filter((s): s is { thread: RedditThread; reason: string } => !!s.thread);
+      .filter((s): s is { thread: RedditThread; reason: string; requestedId: string } => !!s.thread);
+
+    if (selectedThreads.length === 0) {
+      const availableIds = Array.from(threadMap.keys());
+      const requestedIds = selection.selected.map((s) => s.id);
+      console.error("Thread selection mismatch — LLM returned IDs that don't match any fetched threads", {
+        requestedIds,
+        availableIds: availableIds.slice(0, 10),
+      });
+      return NextResponse.json(
+        { error: `Found ${allThreads.length} threads but none matched the LLM selection. Try running again.` },
+        { status: 404 }
+      );
+    }
 
     // ── Step 4: Generate drafts for selected threads in parallel ──
     const draftResults = await Promise.all(
