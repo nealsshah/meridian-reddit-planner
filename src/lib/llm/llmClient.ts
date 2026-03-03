@@ -55,9 +55,21 @@ export async function callOpenAIWithWebSearch(prompt: string): Promise<string> {
 
 function extractJson(raw: string): unknown {
   let str = raw.trim();
+  // Strip markdown fences
   const fence = str.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
   if (fence) str = fence[1].trim();
-  return JSON.parse(str);
+  // Try parsing directly first
+  try {
+    return JSON.parse(str);
+  } catch {
+    // Fall back: find the outermost JSON object in the response
+    const start = str.indexOf("{");
+    const end = str.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+      return JSON.parse(str.slice(start, end + 1));
+    }
+    throw new SyntaxError("No JSON object found in response");
+  }
 }
 
 // ── LLM Call #1: Query Planner ──
