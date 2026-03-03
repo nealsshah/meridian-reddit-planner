@@ -44,10 +44,12 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
     setLoaded(true);
   }, [reload]);
 
-  async function handleRun() {
+  async function handleRunAll() {
     if (!campaign) return;
     setError(null);
+    setCitationError(null);
     setStep("planning");
+    setCitationStep("idle");
 
     try {
       const timer1 = setTimeout(() => setStep("fetching"), 4000);
@@ -97,15 +99,12 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
       setStep("error");
+      return;
     }
-  }
-
-  async function handleCitationRun() {
-    if (!campaign) return;
-    setCitationError(null);
-    setCitationStep("running");
 
     try {
+      setCitationStep("running");
+
       const prompts = campaign.goalPrompts.split("\n").filter(Boolean);
       const competitors = campaign.competitors
         ? campaign.competitors.split("\n").filter(Boolean)
@@ -162,6 +161,16 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
 
   const isRunning = step !== "idle" && step !== "done" && step !== "error";
   const hasDrafts = campaign.savedDrafts.length > 0;
+  const isCitationRunning = citationStep === "running";
+  const isAnyRunning = isRunning || isCitationRunning;
+
+  const baseButtonLabel = hasDrafts ? "Re-run Reddit + Citations" : "Run Reddit + Citations";
+  let runningLabel = "";
+  if (isRunning) {
+    runningLabel = STEP_LABELS[step] || "Running Reddit flow...";
+  } else if (isCitationRunning) {
+    runningLabel = "Capturing citations and briefs...";
+  }
 
   return (
     <div>
@@ -227,29 +236,39 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
 
       {/* Run section */}
       <div className="border-2 border-foreground/10 bg-card p-8 mb-10 animate-fade-up" style={{ animationDelay: "100ms" }}>
-        {!isRunning && (
-          <div className="text-center">
-            <div className="text-5xl mb-4 text-accent/20 animate-float select-none">◊</div>
-            <h2 className="font-display text-2xl mb-2">
-              {hasDrafts ? "Re-run Campaign" : "Auto-Run"}
-            </h2>
-            <p className="text-muted text-sm mb-7 max-w-md mx-auto">
-              Generates search queries, fetches real Reddit threads, picks the 5 best opportunities, and writes ready-to-post comments.
-            </p>
-            <button
-              onClick={handleRun}
-              className="bg-accent text-white px-10 py-3 text-sm font-medium tracking-widest uppercase hover:bg-accent-hover transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {hasDrafts ? "Re-run" : "Run"}
-            </button>
-            {error && (
-              <p className="text-red-500 text-sm mt-5 animate-slide-in">{error}</p>
+        <div className="text-center">
+          <div className="text-5xl mb-4 text-accent/20 animate-float select-none">◊</div>
+          <h2 className="font-display text-2xl mb-2">
+            {hasDrafts ? "Re-run Campaign & Citations" : "Auto-Run Campaign & Citations"}
+          </h2>
+          <p className="text-muted text-sm mb-5 max-w-md mx-auto">
+            Generates search queries, fetches real Reddit threads, picks the 5 best opportunities, writes ready-to-post comments, and captures citation suggestions.
+          </p>
+          <button
+            onClick={handleRunAll}
+            disabled={isAnyRunning}
+            className="bg-accent text-white px-10 py-3 text-sm font-medium tracking-widest uppercase hover:bg-accent-hover transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3 mx-auto"
+          >
+            {isAnyRunning && (
+              <span className="flex gap-1">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="w-1.5 h-1.5 bg-white rounded-full animate-dot"
+                    style={{ animationDelay: `${i * 160}ms` }}
+                  />
+                ))}
+              </span>
             )}
-          </div>
-        )}
+            <span>{isAnyRunning ? runningLabel : baseButtonLabel}</span>
+          </button>
+          {error && (
+            <p className="text-red-500 text-sm mt-4 animate-slide-in">{error}</p>
+          )}
+        </div>
 
         {isRunning && (
-          <div className="py-4 text-center">
+          <div className="pt-6 mt-6 border-t border-border text-center">
             <div className="flex justify-center mb-6">
               <div className="flex gap-2">
                 {(["planning", "fetching", "selecting", "drafting"] as Step[]).map((s) => {
@@ -272,6 +291,14 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
               </div>
             </div>
             <p className="text-muted text-xs tracking-widest uppercase mb-4">{STEP_LABELS[step]}</p>
+          </div>
+        )}
+
+        {!isRunning && isCitationRunning && (
+          <div className="pt-6 mt-6 border-t border-border text-center">
+            <p className="text-muted text-xs tracking-widest uppercase mb-4">
+              Capturing citations and content briefs...
+            </p>
             <div className="flex justify-center gap-1.5">
               {[0, 1, 2].map((i) => (
                 <div
@@ -369,7 +396,6 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
         campaign={campaign}
         citationStep={citationStep}
         citationError={citationError}
-        onRun={handleCitationRun}
         onCampaignUpdate={setCampaign}
       />
     </div>
@@ -380,13 +406,11 @@ function CitationSection({
   campaign,
   citationStep,
   citationError,
-  onRun,
   onCampaignUpdate,
 }: {
   campaign: Campaign;
   citationStep: CitationStep;
   citationError: string | null;
-  onRun: () => void;
   onCampaignUpdate: (c: Campaign) => void;
 }) {
   const hasCitations = campaign.citationResults && Object.keys(campaign.citationResults).length > 0;
@@ -432,24 +456,11 @@ function CitationSection({
             </p>
           )}
         </div>
-        <button
-          onClick={onRun}
-          disabled={citationStep === "running"}
-          className="bg-accent text-white px-6 py-2.5 text-xs font-medium tracking-widest uppercase hover:bg-accent-hover transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {citationStep === "running" && (
-            <span className="flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="w-1 h-1 bg-white rounded-full animate-dot"
-                  style={{ animationDelay: `${i * 160}ms` }}
-                />
-              ))}
-            </span>
-          )}
-          {citationStep === "running" ? "Running..." : "Run Citation Capture"}
-        </button>
+        <div className="text-xs text-muted uppercase tracking-widest">
+          {citationStep === "running"
+            ? "Running as part of campaign..."
+            : "Runs automatically with campaign"}
+        </div>
       </div>
 
       {citationError && (
