@@ -63,8 +63,8 @@ export default function ExportPage({ params }: { params: Promise<{ id: string }>
     URL.revokeObjectURL(url);
   }
 
-  if (!loaded) return <div className="text-muted py-12 text-center">Loading...</div>;
-  if (!jsonData) return <div className="text-muted py-12 text-center">No plan to export</div>;
+  if (!loaded) return <div className="text-muted py-12 text-center">Loading export...</div>;
+  if (!jsonData) return <div className="text-muted py-12 text-center">Nothing to export yet. Run the campaign first to generate drafts, then come back here.</div>;
 
   return (
     <div>

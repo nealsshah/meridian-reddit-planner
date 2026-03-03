@@ -36,6 +36,10 @@ async function lazyLoadExecutors() {
   const { executeCitationTask } = await import("./executors/citations");
   const { executeSeoTask } = await import("./executors/seo");
   const { executeContentTask } = await import("./executors/content");
+  const { executeSocialTask } = await import("./executors/social");
+  const { executePrTask } = await import("./executors/pr");
+  const { executeEmailTask } = await import("./executors/email");
+  const { executeReviewTask } = await import("./executors/reviews");
 
   registerExecutor("reddit_engagement", executeRedditTask);
   registerExecutor("citation_gap_analysis", executeCitationTask);
@@ -43,10 +47,10 @@ async function lazyLoadExecutors() {
   registerExecutor("comparison_page", executeSeoTask);
   registerExecutor("faq_page", executeSeoTask);
   registerExecutor("data_study", executeSeoTask);
-  registerExecutor("social_repurpose", executeContentTask);
-  registerExecutor("review_acquisition", executeContentTask);
-  registerExecutor("pr_pitch", executeContentTask);
-  registerExecutor("email_nurture", executeContentTask);
+  registerExecutor("social_repurpose", executeSocialTask);
+  registerExecutor("pr_pitch", executePrTask);
+  registerExecutor("email_nurture", executeEmailTask);
+  registerExecutor("review_acquisition", executeReviewTask);
   registerExecutor("competitor_audit", executeContentTask);
 }
 

@@ -39,6 +39,7 @@ export type Campaign = {
   workflowTasks?: WorkflowTask[];
   lastWorkflowRunAt?: string;
   workflowOutputs?: Record<string, string>;
+  workflowStructuredOutputs?: Record<string, unknown>;
 };
 
 const STORAGE_KEY = "meridian-campaigns";
@@ -66,7 +67,7 @@ export function getCampaign(id: string): Campaign | undefined {
 }
 
 export function createCampaign(
-  data: Omit<Campaign, "id" | "createdAt" | "queryPlan" | "savedDrafts" | "citationResults" | "lastCitationRunAt" | "citationError" | "generatedArticles" | "workflowPlan" | "workflowTasks" | "lastWorkflowRunAt" | "workflowOutputs">
+  data: Omit<Campaign, "id" | "createdAt" | "queryPlan" | "savedDrafts" | "citationResults" | "lastCitationRunAt" | "citationError" | "generatedArticles" | "workflowPlan" | "workflowTasks" | "lastWorkflowRunAt" | "workflowOutputs" | "workflowStructuredOutputs">
 ): Campaign {
   const campaigns = load();
   const campaign: Campaign = {

@@ -38,7 +38,7 @@ export default function NewCampaignPage() {
         <p className="text-xs font-medium tracking-[0.25em] uppercase text-muted mb-3">
           New Campaign
         </p>
-        <h1 className="font-display text-5xl">Brand Setup</h1>
+        <h1 className="font-display text-5xl">Create Campaign</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-7">
@@ -67,7 +67,7 @@ export default function NewCampaignPage() {
             className={inputClass + " resize-y"}
           />
           <p className="text-xs text-muted mt-1.5">
-            Tell us your marketing goal and the platform will generate a multi-channel workflow to achieve it
+            Describe your marketing goal and we&apos;ll generate a multi-channel workflow to achieve it
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export default function NewCampaignPage() {
             className={inputClass + " resize-y"}
           />
           <p className="text-xs text-muted mt-1.5">
-            User intent queries your brand wants to appear in LLM answers for
+            Search queries where you want your brand to show up in AI and Reddit answers
           </p>
         </div>
 
@@ -97,7 +97,7 @@ export default function NewCampaignPage() {
             placeholder={"One per line, e.g.:\nr/RunningShoeGeeks\nr/running"}
             className={inputClass + " resize-y"}
           />
-          <p className="text-xs text-muted mt-1.5">Leave blank to let AI suggest subreddits</p>
+          <p className="text-xs text-muted mt-1.5">Leave blank and we&apos;ll suggest relevant subreddits automatically</p>
         </div>
 
         <div>
@@ -110,7 +110,7 @@ export default function NewCampaignPage() {
             className={inputClass}
           />
           <p className="text-xs text-muted mt-1.5">
-            Used for citation analysis to identify your existing content
+            Your website domain, so we can track which AI answers already cite your content
           </p>
         </div>
 
@@ -125,7 +125,7 @@ export default function NewCampaignPage() {
             className={inputClass + " resize-y"}
           />
           <p className="text-xs text-muted mt-1.5">
-            Competitor domains for citation comparison
+            Competitor websites to compare against in citation analysis
           </p>
         </div>
 
@@ -138,7 +138,7 @@ export default function NewCampaignPage() {
               <option value="never">Never disclose</option>
             </select>
             <p className="text-xs text-muted mt-1.5">
-              Whether to include a disclosure when mentioning the brand
+              Whether generated comments should disclose the brand affiliation
             </p>
           </div>
 

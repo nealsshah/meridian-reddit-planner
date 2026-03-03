@@ -20,7 +20,7 @@ export default function HomePage() {
   }
 
   if (!loaded) {
-    return <div className="text-muted py-12">Loading...</div>;
+    return <div className="text-muted py-12">Loading campaigns...</div>;
   }
 
   return (

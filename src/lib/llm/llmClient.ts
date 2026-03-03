@@ -2,6 +2,7 @@ import { buildQueryPlannerPrompt, buildThreadSelectorPrompt, buildThreadDraftPro
 import { buildCitationCapturePrompt } from "./citationPrompts";
 import { buildArticlePrompt } from "./articlePrompts";
 import { buildWorkflowPlannerPrompt, buildReplanPrompt } from "./workflowPrompts";
+import { buildSocialPrompt, buildPrPitchPrompt, buildEmailNurturePrompt, buildReviewAcquisitionPrompt } from "./actionPrompts";
 import {
   QueryPlanOutputSchema,
   ThreadSelectionSchema,
@@ -13,6 +14,12 @@ import {
 import { CitationResultSchema, type CitationResult } from "../plans/citationValidators";
 import { GeneratedArticleSchema, type GeneratedArticle } from "../plans/articleValidators";
 import { WorkflowPlanSchema, type WorkflowPlan } from "../plans/workflowValidators";
+import {
+  SocialOutputSchema, type SocialOutput,
+  PrOutputSchema, type PrOutput,
+  EmailOutputSchema, type EmailOutput,
+  ReviewOutputSchema, type ReviewOutput,
+} from "../plans/actionValidators";
 import { ensureSafetyNote } from "../citationSafety";
 
 async function callOpenAI(prompt: string): Promise<string> {
@@ -324,6 +331,119 @@ export async function replanWorkflow(inputs: {
   const validated = WorkflowPlanSchema.safeParse(parsed);
   if (!validated.success) {
     throw new Error(`Workflow replan validation failed: ${validated.error.message}`);
+  }
+
+  return validated.data;
+}
+
+// ── LLM Call #8: Social Posts ──
+
+export async function generateSocialPosts(inputs: {
+  brandName: string;
+  category: string;
+  brandVoice?: string;
+  taskTitle: string;
+  taskDescription: string;
+  rationale: string;
+}): Promise<SocialOutput> {
+  const prompt = buildSocialPrompt(inputs);
+  const raw = await callLLM(prompt);
+
+  let parsed: unknown;
+  try {
+    parsed = extractJson(raw);
+  } catch {
+    throw new Error("LLM returned invalid JSON for social posts");
+  }
+
+  const validated = SocialOutputSchema.safeParse(parsed);
+  if (!validated.success) {
+    throw new Error(`Social output validation failed: ${validated.error.message}`);
+  }
+
+  return validated.data;
+}
+
+// ── LLM Call #9: PR Pitches (uses web search) ──
+
+export async function generatePrPitches(inputs: {
+  brandName: string;
+  brandDomain?: string;
+  category: string;
+  brandVoice?: string;
+  taskTitle: string;
+  taskDescription: string;
+  rationale: string;
+}): Promise<PrOutput> {
+  const prompt = buildPrPitchPrompt(inputs);
+  const raw = await callOpenAIWithWebSearch(prompt);
+
+  let parsed: unknown;
+  try {
+    parsed = extractJson(raw);
+  } catch {
+    throw new Error("LLM returned invalid JSON for PR pitches");
+  }
+
+  const validated = PrOutputSchema.safeParse(parsed);
+  if (!validated.success) {
+    throw new Error(`PR output validation failed: ${validated.error.message}`);
+  }
+
+  return validated.data;
+}
+
+// ── LLM Call #10: Email Nurture Sequence ──
+
+export async function generateEmailSequence(inputs: {
+  brandName: string;
+  category: string;
+  brandVoice?: string;
+  taskTitle: string;
+  taskDescription: string;
+  rationale: string;
+}): Promise<EmailOutput> {
+  const prompt = buildEmailNurturePrompt(inputs);
+  const raw = await callLLM(prompt);
+
+  let parsed: unknown;
+  try {
+    parsed = extractJson(raw);
+  } catch {
+    throw new Error("LLM returned invalid JSON for email sequence");
+  }
+
+  const validated = EmailOutputSchema.safeParse(parsed);
+  if (!validated.success) {
+    throw new Error(`Email output validation failed: ${validated.error.message}`);
+  }
+
+  return validated.data;
+}
+
+// ── LLM Call #11: Review Templates ──
+
+export async function generateReviewTemplates(inputs: {
+  brandName: string;
+  category: string;
+  brandVoice?: string;
+  taskTitle: string;
+  taskDescription: string;
+  rationale: string;
+}): Promise<ReviewOutput> {
+  const prompt = buildReviewAcquisitionPrompt(inputs);
+  const raw = await callLLM(prompt);
+
+  let parsed: unknown;
+  try {
+    parsed = extractJson(raw);
+  } catch {
+    throw new Error("LLM returned invalid JSON for review templates");
+  }
+
+  const validated = ReviewOutputSchema.safeParse(parsed);
+  if (!validated.success) {
+    throw new Error(`Review output validation failed: ${validated.error.message}`);
   }
 
   return validated.data;

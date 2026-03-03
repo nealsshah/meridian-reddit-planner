@@ -41,11 +41,11 @@ export default function DraftDetailPage({
     setTimeout(() => setCopied(false), 2000);
   }
 
-  if (!loaded) return <div className="text-muted py-12">Loading...</div>;
-  if (!campaign) return <div className="text-muted py-12">Campaign not found</div>;
+  if (!loaded) return <div className="text-muted py-12">Loading draft...</div>;
+  if (!campaign) return <div className="text-muted py-12">Campaign not found. <Link href="/" className="text-accent hover:underline">Back to all campaigns</Link></div>;
 
   const sd = campaign.savedDrafts[draftIdx];
-  if (!sd) return <div className="text-muted py-12">Draft not found</div>;
+  if (!sd) return <div className="text-muted py-12">Draft not found. <Link href={`/campaigns/${id}`} className="text-accent hover:underline">Back to campaign</Link></div>;
 
   const spamFlags = checkForSpam(editedComment);
 
@@ -72,13 +72,9 @@ export default function DraftDetailPage({
           href={sd.thread.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-xs font-semibold tracking-wide uppercase transition-colors"
+          className="text-xs font-medium text-accent hover:underline"
         >
-          <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
-            <circle cx="10" cy="10" r="10"/>
-            <path fill="white" d="M16.67 10a1.46 1.46 0 0 0-2.47-1 7.12 7.12 0 0 0-3.85-1.23l.65-3.08 2.13.45a1 1 0 1 0 1-.97 1 1 0 0 0-.96.68l-2.38-.5a.27.27 0 0 0-.32.2l-.73 3.44a7.14 7.14 0 0 0-3.89 1.23 1.46 1.46 0 1 0-1.61 2.39 2.87 2.87 0 0 0 0 .44c0 2.24 2.61 4.06 5.83 4.06s5.83-1.82 5.83-4.06a2.87 2.87 0 0 0 0-.44 1.46 1.46 0 0 0 .68-1.11zm-9.4 1.06a1 1 0 1 1 1 1 1 1 0 0 1-1-1zm5.58 2.63a3.42 3.42 0 0 1-2.85.66 3.42 3.42 0 0 1-2.85-.66.23.23 0 0 1 .33-.33 2.97 2.97 0 0 0 2.52.49 2.97 2.97 0 0 0 2.52-.49.23.23 0 0 1 .33.33zm-.22-1.63a1 1 0 1 1 1-1 1 1 0 0 1-1 1z"/>
-          </svg>
-          Open on Reddit
+          Open on Reddit →
         </a>
       </div>
 
@@ -134,10 +130,10 @@ export default function DraftDetailPage({
       {spamFlags.length > 0 && (
         <div className="border border-red-500/30 bg-red-500/5 p-4 mb-5 animate-slide-in">
           <p className="text-sm font-medium text-red-500">
-            Spam phrases detected: &ldquo;{spamFlags.join('", "')}&rdquo;
+            Likely spam triggers found: &ldquo;{spamFlags.join('", "')}&rdquo;
           </p>
           <p className="text-xs text-red-400 mt-1">
-            Edit the comment below before posting.
+            These phrases may get flagged by Reddit. Edit them out before posting.
           </p>
         </div>
       )}
@@ -184,7 +180,7 @@ export default function DraftDetailPage({
                   onClick={() => navigator.clipboard.writeText(f)}
                   className="text-xs text-accent hover:underline mt-2 font-medium"
                 >
-                  Copy
+                  Copy follow-up
                 </button>
               </div>
             ))}
