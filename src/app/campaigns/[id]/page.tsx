@@ -10,6 +10,8 @@ import type { CitationResult, Brief } from "@/lib/plans/citationValidators";
 import { checkForSpam } from "@/lib/spamCheck";
 import { checkUnsafePhrases } from "@/lib/citationSafety";
 import { renderCitationMarkdown } from "@/lib/export/renderCitationMarkdown";
+import { WorkflowBoard } from "@/components/workflows/WorkflowBoard";
+import { markdownToHtml } from "@/lib/markdownToHtml";
 
 type Step = "idle" | "planning" | "fetching" | "selecting" | "drafting" | "done" | "error";
 type CitationStep = "idle" | "running" | "done" | "error";
@@ -204,6 +206,14 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
         </div>
       </div>
 
+      {/* Objective */}
+      {campaign.objective && (
+        <div className="border border-accent/20 bg-accent/5 p-5 mb-8 animate-fade-up" style={{ animationDelay: "50ms" }}>
+          <span className="text-xs font-medium tracking-[0.15em] uppercase text-muted">Objective</span>
+          <p className="text-sm mt-2 leading-relaxed">{campaign.objective}</p>
+        </div>
+      )}
+
       {/* Campaign inputs */}
       <div className="border border-border bg-card p-5 mb-8 animate-fade-up" style={{ animationDelay: "60ms" }}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
@@ -233,6 +243,9 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
           )}
         </div>
       </div>
+
+      {/* Workflow Board */}
+      <WorkflowBoard campaign={campaign} onCampaignUpdate={setCampaign} />
 
       {/* Run section */}
       <div className="border-2 border-foreground/10 bg-card p-8 mb-10 animate-fade-up" style={{ animationDelay: "100ms" }}>
@@ -398,6 +411,101 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
         citationError={citationError}
         onCampaignUpdate={setCampaign}
       />
+
+      {/* Generated Content from Workflow */}
+      <GeneratedContentSection campaign={campaign} />
+    </div>
+  );
+}
+
+function GeneratedContentSection({ campaign }: { campaign: Campaign }) {
+  const articles = campaign.generatedArticles;
+  if (!articles || Object.keys(articles).length === 0) return null;
+
+  const citationBriefTitles = new Set(
+    campaign.citationResults
+      ? Object.values(campaign.citationResults).flatMap((r) => r.briefs.map((b) => b.briefTitle))
+      : []
+  );
+
+  const standaloneArticles = Object.entries(articles).filter(
+    ([title]) => !citationBriefTitles.has(title)
+  );
+
+  if (standaloneArticles.length === 0) return null;
+
+  return (
+    <div className="border-2 border-foreground/10 bg-card p-8 mt-10 animate-fade-up">
+      <h2 className="font-display text-2xl mb-6">Generated Content</h2>
+      <div className="space-y-4">
+        {standaloneArticles.map(([title, article]) => (
+          <StandaloneArticleCard key={title} article={article} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StandaloneArticleCard({ article }: { article: import("@/lib/plans/articleValidators").GeneratedArticle }) {
+  const [showContent, setShowContent] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(article.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleDownload() {
+    const blob = new Blob([article.content], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${article.slug}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="border border-border bg-background p-5">
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <h3 className="text-sm font-medium">{article.title}</h3>
+          <span className="text-[10px] px-2 py-0.5 bg-success/10 text-success font-medium uppercase tracking-wider">
+            {article.wordCount} words
+          </span>
+        </div>
+        <button
+          onClick={() => setShowContent(!showContent)}
+          className="text-xs text-accent hover:underline shrink-0"
+        >
+          {showContent ? "Hide" : "View Content"}
+        </button>
+      </div>
+
+      {showContent && (
+        <div className="mt-3 pt-3 border-t border-border/50">
+          <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto mb-3">
+            {article.content}
+          </pre>
+          <div className="flex gap-2">
+            <button
+              onClick={handleCopy}
+              className={`text-xs px-3 py-1.5 font-medium tracking-wider uppercase transition-colors ${
+                copied ? "bg-success/10 text-success" : "bg-foreground/5 hover:bg-foreground/10"
+              }`}
+            >
+              {copied ? "Copied!" : "Copy"}
+            </button>
+            <button
+              onClick={handleDownload}
+              className="text-xs px-3 py-1.5 font-medium tracking-wider uppercase bg-foreground/5 hover:bg-foreground/10 transition-colors"
+            >
+              Download .md
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -753,7 +861,7 @@ function BriefCard({
           <h5 className="text-sm font-medium">{existingArticle.title}</h5>
           <div
             className="text-sm prose prose-sm max-w-none [&_h1]:text-lg [&_h1]:font-display [&_h2]:text-base [&_h2]:font-display [&_h3]:text-sm [&_h3]:font-medium [&_p]:text-sm [&_p]:leading-relaxed [&_li]:text-sm [&_a]:text-accent"
-            dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(existingArticle.content) }}
+            dangerouslySetInnerHTML={{ __html: markdownToHtml(existingArticle.content) }}
           />
           {existingArticle.sourcesUsed.length > 0 && (
             <div className="pt-2 border-t border-border/50">
@@ -858,24 +966,6 @@ function ArticleCopyButton({ onClick }: { onClick: () => void }) {
       {copied ? "Copied!" : "Copy Article"}
     </button>
   );
-}
-
-function simpleMarkdownToHtml(md: string): string {
-  return md
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-    .replace(/^- (.+)$/gm, "<li>$1</li>")
-    .replace(/(<li>[\s\S]*<\/li>)/, "<ul>$1</ul>")
-    .replace(/\n\n/g, "</p><p>")
-    .replace(/^(?!<[hulo])(.+)$/gm, "<p>$1</p>")
-    .replace(/<p><\/p>/g, "");
 }
 
 function CopyMarkdownButton({ onClick }: { onClick: () => void }) {

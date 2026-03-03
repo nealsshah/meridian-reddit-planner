@@ -2,6 +2,7 @@ import type { QueryPlanOutput, ThreadDraft } from "./plans/validators";
 import type { CitationResult } from "./plans/citationValidators";
 import type { GeneratedArticle } from "./plans/articleValidators";
 import type { RedditThread } from "@/app/api/reddit/search/route";
+import type { WorkflowPlan, WorkflowTask } from "./plans/workflowValidators";
 
 export type CitationResultsByPrompt = Record<string, CitationResult>;
 
@@ -19,6 +20,7 @@ export type Campaign = {
   brandName: string;
   category: string;
   goalPrompts: string;
+  objective?: string;
   targetSubs: string;
   brandVoice: string;
   doNotSay: string;
@@ -33,6 +35,10 @@ export type Campaign = {
   lastCitationRunAt?: string;
   citationError?: string;
   generatedArticles?: Record<string, GeneratedArticle>;
+  workflowPlan?: WorkflowPlan;
+  workflowTasks?: WorkflowTask[];
+  lastWorkflowRunAt?: string;
+  workflowOutputs?: Record<string, string>;
 };
 
 const STORAGE_KEY = "meridian-campaigns";
@@ -60,7 +66,7 @@ export function getCampaign(id: string): Campaign | undefined {
 }
 
 export function createCampaign(
-  data: Omit<Campaign, "id" | "createdAt" | "queryPlan" | "savedDrafts" | "citationResults" | "lastCitationRunAt" | "citationError" | "generatedArticles">
+  data: Omit<Campaign, "id" | "createdAt" | "queryPlan" | "savedDrafts" | "citationResults" | "lastCitationRunAt" | "citationError" | "generatedArticles" | "workflowPlan" | "workflowTasks" | "lastWorkflowRunAt" | "workflowOutputs">
 ): Campaign {
   const campaigns = load();
   const campaign: Campaign = {

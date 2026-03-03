@@ -19,6 +19,7 @@ export default function NewCampaignPage() {
       brandName: form.get("brandName") as string,
       category: form.get("category") as string,
       goalPrompts: form.get("goalPrompts") as string,
+      objective: (form.get("objective") as string) || "",
       targetSubs: (form.get("targetSubs") as string) || "",
       brandVoice: (form.get("brandVoice") as string) || "",
       doNotSay: (form.get("doNotSay") as string) || "",
@@ -53,6 +54,21 @@ export default function NewCampaignPage() {
             Category <span className="text-accent">*</span>
           </label>
           <input name="category" required placeholder="e.g. Running Shoes" className={inputClass} />
+        </div>
+
+        <div>
+          <label className={labelClass}>
+            Objective
+          </label>
+          <textarea
+            name="objective"
+            rows={3}
+            placeholder={"Describe what you want to achieve in plain language, e.g.:\nI want to increase visibility of my brand when users search for best running shoes for beginners. Drive more organic traffic and get cited by AI assistants."}
+            className={inputClass + " resize-y"}
+          />
+          <p className="text-xs text-muted mt-1.5">
+            Tell us your marketing goal and the platform will generate a multi-channel workflow to achieve it
+          </p>
         </div>
 
         <div>

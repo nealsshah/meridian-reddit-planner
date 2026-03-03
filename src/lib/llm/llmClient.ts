@@ -1,6 +1,7 @@
 import { buildQueryPlannerPrompt, buildThreadSelectorPrompt, buildThreadDraftPrompt } from "./prompts";
 import { buildCitationCapturePrompt } from "./citationPrompts";
 import { buildArticlePrompt } from "./articlePrompts";
+import { buildWorkflowPlannerPrompt, buildReplanPrompt } from "./workflowPrompts";
 import {
   QueryPlanOutputSchema,
   ThreadSelectionSchema,
@@ -11,6 +12,7 @@ import {
 } from "../plans/validators";
 import { CitationResultSchema, type CitationResult } from "../plans/citationValidators";
 import { GeneratedArticleSchema, type GeneratedArticle } from "../plans/articleValidators";
+import { WorkflowPlanSchema, type WorkflowPlan } from "../plans/workflowValidators";
 import { ensureSafetyNote } from "../citationSafety";
 
 async function callOpenAI(prompt: string): Promise<string> {
@@ -247,6 +249,81 @@ export async function generateArticle(inputs: {
   const validated = GeneratedArticleSchema.safeParse(result);
   if (!validated.success) {
     throw new Error(`Article validation failed: ${JSON.stringify(validated.error.issues)}`);
+  }
+
+  return validated.data;
+}
+
+// ── LLM Call #6: Workflow Planner ──
+
+export async function generateWorkflowPlan(inputs: {
+  brandName: string;
+  category: string;
+  objective: string;
+  goalPrompts: string;
+  brandDomain?: string;
+  competitors?: string;
+  brandVoice?: string;
+}): Promise<WorkflowPlan> {
+  const prompt = buildWorkflowPlannerPrompt(inputs);
+  const raw = await callLLM(prompt);
+
+  let parsed: unknown;
+  try {
+    parsed = extractJson(raw);
+  } catch {
+    throw new Error("LLM returned invalid JSON for workflow plan");
+  }
+
+  if (parsed && typeof parsed === "object") {
+    const p = parsed as Record<string, unknown>;
+    if (Array.isArray(p.tasks)) {
+      for (const task of p.tasks as Record<string, unknown>[]) {
+        if (!task.status) task.status = "todo";
+      }
+    }
+  }
+
+  const validated = WorkflowPlanSchema.safeParse(parsed);
+  if (!validated.success) {
+    throw new Error(`Workflow plan validation failed: ${validated.error.message}`);
+  }
+
+  return validated.data;
+}
+
+// ── LLM Call #7: Workflow Replan ──
+
+export async function replanWorkflow(inputs: {
+  brandName: string;
+  category: string;
+  objective: string;
+  currentPlan: string;
+  completedTasks: string;
+  kpiStatus: string;
+}): Promise<WorkflowPlan> {
+  const prompt = buildReplanPrompt(inputs);
+  const raw = await callLLM(prompt);
+
+  let parsed: unknown;
+  try {
+    parsed = extractJson(raw);
+  } catch {
+    throw new Error("LLM returned invalid JSON for workflow replan");
+  }
+
+  if (parsed && typeof parsed === "object") {
+    const p = parsed as Record<string, unknown>;
+    if (Array.isArray(p.tasks)) {
+      for (const task of p.tasks as Record<string, unknown>[]) {
+        if (!task.status) task.status = "todo";
+      }
+    }
+  }
+
+  const validated = WorkflowPlanSchema.safeParse(parsed);
+  if (!validated.success) {
+    throw new Error(`Workflow replan validation failed: ${validated.error.message}`);
   }
 
   return validated.data;
